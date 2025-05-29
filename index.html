@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jogo Tabuleiro Gengar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .character {
+      width: 60px;
+      height: 60px;
+      position: absolute;
+      transition: transform 0.3s ease-in-out;
+      z-index: 20;
+    }
+    .character img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 5px rgba(100,0,150,0.7));
+    }
+    .obstacle {
+      width: 60px;
+      height: 60px;
+      position: absolute;
+      opacity: 0.9;
+      filter: drop-shadow(0 0 4px rgba(0,0,0,0.8));
+      user-select: none;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .obstacle img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    /* Estilo do rastro */
+    .trail {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background-color: rgba(119, 0, 255, 0.4); /* Laranja translúcido */
+      border-radius: 10px;
+      pointer-events: none;
+      user-select: none;
+      z-index: 15;
+      transition: background-color 0.3s ease;
+    }
+    /* Estilo para semi-barreira (A) */
+    .semi-barrier {
+      background-color: rgba(255, 165, 0, 0.3); /* Laranja semi-transparente */
+      /* You could add a border or other visual cues */
+      border: 2px dashed orange;
+    }
+    /* Estilo para fruta (F) - visual apenas */
+    .fruit-cell {
+      /* Maybe a light green background or an icon */
+      background-color: rgba(0, 255, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-900">
+  <div class="flex flex-col items-center">
+    <div id="board" class="grid grid-cols-6 grid-rows-6 gap-1 w-[360px] h-[360px] relative"></div>
+
+    <button id="startButton" class="mt-4 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">Iniciar</button>
+
+    <button id="visualizeButton" class="mt-4 ml-4 px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75">Visualizar Processo</button>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const cellSize = 60;
+
+    // Map data from main.py (manually copied)
+    const mapData = [
+        ['C','','','','B',''],
+        ['','B','','','',''],
+        ['','','F','','',''],
+        ['','','','B','B',''],
+        ['','','','A','',''],
+        ['','','','','','S']
+    ];
+
+    const goal = { row: 5, col: 5 }; // canto inferior direito
+
+    let character = { row: 0, col: 0 };
+    let characterEl;
+
+    // Lista que guarda o caminho (rastro)
+    let path = [{row: character.row, col: character.col}];
+
+    function createBoard() {
+      for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 6; col++) {
+          const cell = document.createElement('div');
+          // Apply cell styling based on mapData
+          let cellClasses = 'w-full h-full flex items-center justify-center';
+          const cellContent = mapData[row][col];
+
+          if (cellContent === 'B') {
+             // Obstacles will be added as separate elements later, this cell remains empty
+             cellClasses += ' '; // No border for obstacle cells in the grid div
+          } else {
+             cellClasses += ' border border-gray-600'; // Default border
+             if (cellContent === 'A') {
+                cellClasses += ' semi-barrier';
+             } else if (cellContent === 'F') {
+                cellClasses += ' fruit-cell';
+                // Optional: add a fruit image/icon
+                const fruitImg = document.createElement('img');
+                fruitImg.src = 'https://www.svgrepo.com/show/304929/apple.svg'; // Example fruit icon
+                fruitImg.alt = 'Fruit';
+                fruitImg.style.width = '40px';
+                fruitImg.style.height = '40px';
+                fruitImg.style.objectFit = 'contain';
+                cell.appendChild(fruitImg);
+             }
+          }
+
+          cell.className = cellClasses;
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          board.appendChild(cell);
+        }
+      }
+
+      // Personagem Gengar
+      characterEl = document.createElement('div');
+      characterEl.className = 'character';
+      const imgChar = document.createElement('img');
+      imgChar.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png';
+      imgChar.alt = 'Personagem Gengar';
+      characterEl.appendChild(imgChar);
+      updateCharacterPosition();
+      board.appendChild(characterEl);
+
+      // Obstáculos - Torres
+      for (let row = 0; row < mapData.length; row++) {
+          for (let col = 0; col < mapData[0].length; col++) {
+              if (mapData[row][col] === 'B') {
+                  const obs = document.createElement('div');
+                  obs.className = 'obstacle';
+                  obs.style.transform = `translate(${col * cellSize}px, ${row * cellSize}px)`;
+                  const imgObs = document.createElement('img');
+                  imgObs.src = 'https://png.pngtree.com/png-clipart/20240427/original/pngtree-cute-cartoon-lantern-for-camping-drawing-png-image_14951451.png'; // torre de xadrez - torre
+                  imgObs.alt = 'Torre Obstáculo';
+                  obs.appendChild(imgObs);
+                  board.appendChild(obs);
+              }
+          }
+      }
+
+      // Imagem da chegada
+      const goalImg = document.createElement('img');
+      goalImg.src = 'https://artpoin.com/wp-content/uploads/2024/02/artpoin-hot-wheels18.png'; // bandeira como chegada
+      goalImg.alt = 'Chegada';
+      goalImg.style.position = 'absolute';
+      goalImg.style.width = cellSize + 'px';
+      goalImg.style.height = cellSize + 'px';
+      goalImg.style.transform = `translate(${goal.col * cellSize}px, ${goal.row * cellSize}px)`;
+      goalImg.style.zIndex = '15';
+      board.appendChild(goalImg);
+
+      updateTrail(); // Inicializa o rastro na posição inicial
+    }
+
+    function updateCharacterPosition() {
+      characterEl.style.transform = `translate(${character.col * cellSize}px, ${character.row * cellSize}px)`;
+    }
+
+    // Atualiza o rastro no tabuleiro
+    function updateTrail() {
+      // Remove rastros antigos
+      document.querySelectorAll('.trail').forEach(el => el.remove());
+
+      // Adiciona divs para cada célula do rastro
+      path.forEach(({row, col}) => {
+        const trailDiv = document.createElement('div');
+        trailDiv.className = 'trail';
+        trailDiv.style.transform = `translate(${col * cellSize}px, ${row * cellSize}px)`;
+        board.appendChild(trailDiv);
+      });
+    }
+
+    function moveCharacter(direction) {
+      const movement = {
+        cima: [-1, 0],
+        baixo: [1, 0],
+        esquerda: [0, -1],
+        direita: [0, 1],
+        'diagonal superior esquerda': [-1, -1],
+        'diagonal superior direita': [-1, 1],
+        'diagonal inferior esquerda': [1, -1],
+        'diagonal inferior direita': [1, 1],
+      };
+
+      const [dRow, dCol] = movement[direction];
+      const newRow = character.row + dRow;
+      const newCol = character.col + dCol;
+
+      // Verifica limites e obstáculos
+      if (
+        newRow >= 0 &&
+        newRow < 6 &&
+        newCol >= 0 &&
+        newCol < 6 &&
+        !isObstacleHTML(newRow, newCol)
+      ) {
+        // Verifica se já existe no path (rastro)
+        const indexInPath = path.findIndex(p => p.row === newRow && p.col === newCol);
+
+        if (indexInPath === -1) {
+          // Não está no path: adiciona no final
+          path.push({row: newRow, col: newCol});
+        } else {
+          // Já está no path: remove tudo após essa posição (apaga o rastro "futuro")
+          path = path.slice(0, indexInPath + 1);
+        }
+
+        character.row = newRow;
+        character.col = newCol;
+        updateCharacterPosition();
+        updateTrail();
+      }
+    }
+
+    // Function to check for obstacles using mapData
+    function isObstacleHTML(row, col) {
+      if (row >= 0 && row < mapData.length && col >= 0 && col < mapData[0].length) {
+        return mapData[row][col] === 'B';
+      }
+      return false; // Out of bounds is not an obstacle in this check context
+    }
+
+    createBoard();
+
+    // Add event listener for the start button
+    const startButton = document.getElementById('startButton');
+    startButton.addEventListener('click', () => {
+      // Reset character position and path for a new run
+      character = { row: 0, col: 0 };
+      path = [{row: character.row, col: character.col}];
+      updateCharacterPosition();
+      updateTrail();
+
+      // Fetch commands from the Python server
+      fetch('http://127.0.0.1:8000/get_path')
+        .then(response => response.json())
+        .then(movementCommands => {
+          // Execute commands with delay
+          movementCommands.forEach((command, index) => {
+            setTimeout(() => {
+              moveCharacter(command);
+              // Optional: Check if goal is reached after the last command
+              if (index === movementCommands.length - 1) {
+                 if (character.row === goal.row && character.col === goal.col) {
+                   console.log("Goal reached!");
+                   // Add visual indication of goal reached if desired
+                 } else {
+                   console.log("Path finished, but goal not reached.");
+                 }
+              }
+            }, 500 * (index + 1)); // Adjust delay as needed (500ms per step)
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching path:', error);
+          console.log("Could not fetch path from server. Make sure main.py is running.");
+        });
+    });
+
+    // Function to animate a single visualization step
+    function animateVisualizationStep(step) {
+        // Ensure characterEl and cellSize are accessible (they are in the current scope)
+        const currentCharacterRow = character.row;
+        const currentCharacterCol = character.col;
+
+        // Calculate the character's current pixel position
+        const currentX = currentCharacterCol * cellSize;
+        const currentY = currentCharacterRow * cellSize;
+
+        // Reset transition for immediate positioning if needed before animation
+        characterEl.style.transition = 'none';
+        characterEl.style.transform = `translate(${currentX}px, ${currentY}px)`;
+
+        // Small timeout to allow the transition: none to apply
+        setTimeout(() => {
+            if (step.type === 'attempt') {
+                const [targetRow, targetCol] = step.to;
+
+                // Calculate the target pixel position for the attempted move
+                const targetX = targetCol * cellSize;
+                const targetY = targetRow * cellSize;
+
+                // Animate the character element towards the attempted position briefly
+                characterEl.style.transition = 'transform 0.15s linear'; // Quick transition for attempt
+                characterEl.style.transform = `translate(${targetX}px, ${targetY}px)`;
+
+                // We don't snap back here. The next step from the backend will determine
+                // the character's next state/position.
+
+                 // Optional: Add visual feedback for attempted/blocked cells
+                 // You could briefly highlight the target cell here.
+                 console.log(`Attempted move from ${step.from} to ${step.to} (${step.direction}).`);
+
+            } else if (step.type === 'move') {
+                // This step indicates the character successfully moved to a new node in the path
+                const [newRow, newCol] = step.coords;
+
+                // Update the actual character position and trail
+                character.row = newRow;
+                character.col = newCol;
+                // The character element should smoothly move to the new correct position
+                const newX = newCol * cellSize;
+                const newY = newRow * cellSize;
+                characterEl.style.transition = 'transform 0.3s ease-in-out'; // Smooth transition for successful move
+                characterEl.style.transform = `translate(${newX}px, ${newY}px)`;
+                 updateTrail(); // Update the visual trail
+
+                 // Optional: Add visual feedback for successful moves (e.g., highlight cell)
+                 console.log(`Moved to node ${step.coords}`);
+
+             } else if (step.type === 'blocked') {
+                  // Attempt was blocked by obstacle or boundary
+                  console.log(`Attempted move to ${step.coords} was blocked.`);
+                  // Optional: Add visual feedback for blocked cells
+             } else if (step.type === 'skipped_closed' || step.type === 'skipped_open') {
+                 // Attempt led to a skipped node (in closed list or worse path)
+                 console.log(`Skipped move to ${step.coords} (${step.type}).`);
+                 // Optional: Add visual feedback for skipped cells
+             } else if (step.type === 'add_open') {
+                  // Node was added to the open list
+                  console.log(`Node ${step.coords} added to open list.`);
+                  // Optional: Add visual feedback for nodes added to open list
+             }
+             // Add more cases for other step types if needed for richer visualization
+        }, 10); // Small delay to ensure transition: none applies
+    }
+
+    // Add event listener for the visualize button
+    const visualizeButton = document.getElementById('visualizeButton');
+    visualizeButton.addEventListener('click', () => {
+        // Reset character position and path for a new run
+        character = { row: 0, col: 0 };
+        path = [{row: character.row, col: character.col}];
+        updateCharacterPosition();
+        updateTrail();
+
+        // Fetch visualization steps from the Python server
+        fetch('http://127.0.0.1:8000/get_visualization_steps')
+            .then(response => response.json())
+            .then(visualizationSteps => {
+                // Process and visualize steps with delay
+                visualizationSteps.forEach((step, index) => {
+                    // Increase delay significantly for visualization steps
+                    setTimeout(() => {
+                        animateVisualizationStep(step);
+                    }, 50 * (index + 1)); // Adjusted delay for smoother visualization
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching visualization steps:', error);
+                console.log("Could not fetch visualization steps from server. Make sure main.py is running.");
+            });
+    });
+  </script>
+</body>
+</html>
