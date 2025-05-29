@@ -46,13 +46,7 @@
       transition: background-color 0.3s ease;
     }
 
-    .semi-barrier {
-      background-color: rgba(255, 165, 0, 0.3); 
-      border: 2px dashed orange;
-    }
-    .fruit-cell {
-      background-color: rgba(0, 255, 0, 0.1);
-    }
+
   </style>
 </head>
 <body class="flex items-center justify-center min-h-screen bg-gray-900">
@@ -95,10 +89,17 @@
              cellClasses += ' border border-gray-600'; 
              if (cellContent === 'A') {
                 cellClasses += ' semi-barrier';
+                const semiBarrierImg = document.createElement('img');
+                semiBarrierImg.src = 'https://png.pngtree.com/png-clipart/20230914/original/pngtree-melting-candle-clipart-vector-png-image_12161326.png'; 
+                semiBarrierImg.alt = 'Fruit';
+                semiBarrierImg.style.width = '40px';
+                semiBarrierImg.style.height = '40px';
+                semiBarrierImg.style.objectFit = 'contain';
+                cell.appendChild(semiBarrierImg);
              } else if (cellContent === 'F') {
                 cellClasses += ' fruit-cell';
                 const fruitImg = document.createElement('img');
-                fruitImg.src = 'https://www.svgrepo.com/show/304929/apple.svg'; 
+                fruitImg.src = 'https://i.pinimg.com/originals/c2/9c/dc/c29cdc25a89d24c8af0e6d6cba8ec758.png'; 
                 fruitImg.alt = 'Fruit';
                 fruitImg.style.width = '40px';
                 fruitImg.style.height = '40px';
