@@ -55,23 +55,22 @@
 
     <button id="startButton" class="mt-4 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">Iniciar</button>
 
-    <button id="visualizeButton" class="mt-4 ml-4 px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus::ring-green-500 focus:ring-opacity-75">Visualizar Processo</button>
+    <button id="visualizeButton" class="mt-4 ml-4 px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus::ring-green-500 focus:ring-opacity-75">Visualizar Processo</button>
   </div>
 
   <script>
     const board = document.getElementById('board');
     const cellSize = 60;
-    //todo: receber o mapa do back
     const mapData = [
-        ['C','','','','B',''],
-        ['','B','','','',''],
-        ['','','F','','',''],
-        ['','','','B','B',''],
-        ['','','','A','',''],
-        ['','','','','','S']
+    ['C','','','','B',''],
+    ['','B','','','',''],
+    ['','','F','','',''],
+    ['','','','B','B',''],
+    ['','','','A','',''],
+    ['','','','','','S']
     ];
 
-    const goal = { row: 5, col: 5 }; // canto inferior direito
+    const goal = { row: 5, col: 5 };
     let character = { row: 0, col: 0 };
     let characterEl;
     let path = [{row: character.row, col: character.col}];
@@ -84,13 +83,13 @@
           const cellContent = mapData[row][col];
 
           if (cellContent === 'B') {
-             cellClasses += ' '; 
+             cellClasses += ' ';
           } else {
-             cellClasses += ' border border-gray-600'; 
+             cellClasses += ' border border-gray-600';
              if (cellContent === 'A') {
                 cellClasses += ' semi-barrier';
                 const semiBarrierImg = document.createElement('img');
-                semiBarrierImg.src = 'https://png.pngtree.com/png-clipart/20230914/original/pngtree-melting-candle-clipart-vector-png-image_12161326.png'; 
+                semiBarrierImg.src = 'https://png.pngtree.com/png-clipart/20230914/original/pngtree-melting-candle-clipart-vector-png-image_12161326.png';
                 semiBarrierImg.alt = 'Fruit';
                 semiBarrierImg.style.width = '40px';
                 semiBarrierImg.style.height = '40px';
@@ -99,7 +98,7 @@
              } else if (cellContent === 'F') {
                 cellClasses += ' fruit-cell';
                 const fruitImg = document.createElement('img');
-                fruitImg.src = 'https://i.pinimg.com/originals/c2/9c/dc/c29cdc25a89d24c8af0e6d6cba8ec758.png'; 
+                fruitImg.src = 'https://i.pinimg.com/originals/c2/9c/dc/c29cdc25a89d24c8af0e6d6cba8ec758.png';
                 fruitImg.alt = 'Fruit';
                 fruitImg.style.width = '40px';
                 fruitImg.style.height = '40px';
@@ -131,7 +130,7 @@
                   obs.className = 'obstacle';
                   obs.style.transform = `translate(${col * cellSize}px, ${row * cellSize}px)`;
                   const imgObs = document.createElement('img');
-                  imgObs.src = 'https://png.pngtree.com/png-clipart/20240427/original/pngtree-cute-cartoon-lantern-for-camping-drawing-png-image_14951451.png'; // torre de xadrez - torre
+                  imgObs.src = 'https://png.pngtree.com/png-clipart/20240427/original/pngtree-cute-cartoon-lantern-for-camping-drawing-png-image_14951451.png';
                   imgObs.alt = 'Torre Obstáculo';
                   obs.appendChild(imgObs);
                   board.appendChild(obs);
@@ -140,7 +139,7 @@
       }
 
       const goalImg = document.createElement('img');
-      goalImg.src = 'https://artpoin.com/wp-content/uploads/2024/02/artpoin-hot-wheels18.png'; 
+      goalImg.src = 'https://artpoin.com/wp-content/uploads/2024/02/artpoin-hot-wheels18.png';
       goalImg.alt = 'Chegada';
       goalImg.style.position = 'absolute';
       goalImg.style.width = cellSize + 'px';
@@ -149,7 +148,7 @@
       goalImg.style.zIndex = '15';
       board.appendChild(goalImg);
 
-      updateTrail(); 
+      updateTrail();
     }
 
     function updateCharacterPosition() {
@@ -209,7 +208,7 @@
       if (row >= 0 && row < mapData.length && col >= 0 && col < mapData[0].length) {
         return mapData[row][col] === 'B';
       }
-      return false; 
+      return false;
     }
 
     createBoard();
@@ -234,7 +233,7 @@
                    console.log("Path finished, but goal not reached.");
                  }
               }
-            }, 500 * (index + 1)); 
+            }, 500 * (index + 1));
           });
         })
         .catch(error => {
@@ -258,7 +257,7 @@
                 const targetX = targetCol * cellSize;
                 const targetY = targetRow * cellSize;
 
-                characterEl.style.transition = 'transform 0.15s linear'; 
+                characterEl.style.transition = 'transform 0.15s linear';
                 characterEl.style.transform = `translate(${targetX}px, ${targetY}px)`;
                  console.log(`Attempted move from ${step.from} to ${step.to} (${step.direction}).`);
 
@@ -267,12 +266,12 @@
 
                 character.row = newRow;
                 character.col = newCol;
-                
+
                 const newX = newCol * cellSize;
                 const newY = newRow * cellSize;
-                characterEl.style.transition = 'transform 0.3s ease-in-out'; 
+                characterEl.style.transition = 'transform 0.3s ease-in-out';
                 characterEl.style.transform = `translate(${newX}px, ${newY}px)`;
-                 updateTrail(); 
+                 updateTrail();
                  console.log(`Moved to node ${step.coords}`);
 
              } else if (step.type === 'blocked') {
@@ -282,8 +281,8 @@
              } else if (step.type === 'add_open') {
                   console.log(`Node ${step.coords} added to open list.`);
              }
-            
-        }, 10); 
+
+        }, 10);
     }
     const visualizeButton = document.getElementById('visualizeButton');
     visualizeButton.addEventListener('click', () => {
@@ -299,7 +298,7 @@
                 visualizationSteps.forEach((step, index) => {
                     setTimeout(() => {
                         animateVisualizationStep(step);
-                    }, 50 * (index + 1)); 
+                    }, 50 * (index + 1));
                 });
             })
             .catch(error => {
